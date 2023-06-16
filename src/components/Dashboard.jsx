@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import {useNavigate, useLocation} from 'react-router-dom';
 import { fetchLaunches } from "../sevices";
 import LaunchTable from "./LaunchTable";
 import {
@@ -7,12 +8,16 @@ import {
   MenuItem,
   Box,
 } from "@mui/material";
+import './Dashboard.css';
 
 const Dashboard = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const [dateFilter, setDateFilter] = useState(queryParams.get('date') || "all");
+  const [statusFilter, setStatusFilter] = useState(queryParams.get("status") || "all");
   const [launches, setLaunches] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
 
   const loadData = async () => {
     setLoading(true);
@@ -30,6 +35,13 @@ const Dashboard = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    queryParams.set("date", dateFilter);
+    queryParams.set("status", statusFilter)
+    navigate({ search: queryParams.toString() });
+    // eslint-disable-next-line
+  }, [dateFilter, statusFilter])
+
   const handleDateFilterChange = (event) => {
     setDateFilter(event.target.value);
   };
@@ -45,7 +57,7 @@ const Dashboard = () => {
     const launchStatus = launch.launch_success
     ? "success"
     : launch.launch_success === false
-    ? "failure"
+    ? "failed"
     : "upcoming"
   
     if (dateFilter === "past-6" && launchDate < filterDate) {
@@ -63,7 +75,7 @@ const Dashboard = () => {
   });
 
   return (
-    <div style={{margin: "30px 150px"}}>
+    <div className="main-container">
       <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
         <FormControl>
         <Select sx={{ boxShadow: 'none', '.MuiOutlinedInput-notchedOutline': { border: 0 } }} autoWidth value={dateFilter} onChange={handleDateFilterChange}>
@@ -78,7 +90,7 @@ const Dashboard = () => {
             <MenuItem value="all">All Launches</MenuItem>
             <MenuItem value="upcoming">Upcoming Launches</MenuItem>
             <MenuItem value="success">Successful Launches</MenuItem>
-            <MenuItem value="failure">Failed Launches</MenuItem>
+            <MenuItem value="failed">Failed Launches</MenuItem>
           </Select>
         </FormControl>
       </Box>
